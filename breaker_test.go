@@ -22,6 +22,26 @@ func TestWhenThresholdExceededStateIsHalfOpenError(t *testing.T) {
 	assert.Equal(t, err, errors.New("circuit half open. trying to recover"))
 }
 
+func TestWhenErrorsAreNotConsecutiveRemainClosed(t *testing.T) {
+	cb := NewCircuitBreaker(&Settings{threshold: 2, name: "test"})
+
+	errFunc := func() (interface{}, error) {
+		return nil, errors.New("i like to fail")
+	}
+
+	happyFunc := func() (interface{}, error) {
+		return "yay", nil
+	}
+
+	cb.Execute(errFunc)
+	cb.Execute(happyFunc)
+	cb.Execute(errFunc)
+	_, err := cb.Execute(happyFunc)
+
+	assert.Equal(t, err, nil)
+	assert.Equal(t, cb.GetState(), Closed)
+}
+
 func TestWhenRecoverFailsStateIsOpen(t *testing.T) {
 	cb := NewCircuitBreaker(&Settings{threshold: 2, name: "test", retryInterval: 1, retryMax: 5})
 
