@@ -50,6 +50,7 @@ func TestWhenRecoverFailsStateIsOpen(t *testing.T) {
 func TestWhenRecoverSucceedsStateIsClosed(t *testing.T) {
 	cb := NewCircuitBreaker(&Settings{threshold: 2, name: "test", retryInterval: 1, retryMax: 5})
 
+	// function which throws an error for every time within the next 3 seconds
 	then := time.Now().Add(time.Second * 3)
 	testFunc := func() (interface{}, error) {
 		now := time.Now()

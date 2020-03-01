@@ -83,8 +83,8 @@ func (c *circuitBreaker) Execute(f func() (interface{}, error)) (interface{}, er
 	case HalfOpen:
 		return nil, errors.New("circuit half open. trying to recover")
 	case Open:
-		message := c.settings.name + " circuit breaker open"
-		fmt.Println(message)
+		message := fmt.Sprintf("%v circuit breaker open", c.settings.name)
+		fmt.Printf("ALERT: %v", message)
 		return nil, errors.New(message)
 	}
 	return f()
