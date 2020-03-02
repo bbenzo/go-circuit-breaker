@@ -18,16 +18,16 @@ const defaultErrorThreshold = 5
 const defaultRetryInterval = 5
 const defaultRetryMax = 5
 
-// Settings holds variables to configure circuit breaker
-type Settings struct {
-	name          string
+// Strategy holds variables to configure circuit breaker
+type Strategy struct {
 	threshold     int
 	retryInterval int
 	retryMax      int
 }
 
 type circuitBreaker struct {
-	settings          *Settings
+	name              string
+	strategy          *Strategy
 	state             State
 	consecutiveErrors int
 }
@@ -41,9 +41,8 @@ type CircuitBreaker interface {
 
 // GetName returns name of circuit breaker
 func (c *circuitBreaker) GetName() string {
-	return c.settings.name
+	return c.name
 }
-
 
 // GetState returns state of circuit breaker
 func (c *circuitBreaker) GetState() State {
@@ -51,21 +50,22 @@ func (c *circuitBreaker) GetState() State {
 }
 
 // NewCircuitBreaker returns new instance of circuit breaker
-func NewCircuitBreaker(settings *Settings) CircuitBreaker {
-	if settings.threshold <= 0 {
-		settings.threshold = defaultErrorThreshold
+func NewCircuitBreaker(name string, strategy *Strategy) CircuitBreaker {
+	if strategy.threshold <= 0 {
+		strategy.threshold = defaultErrorThreshold
 	}
 
-	if settings.retryMax <= 0 {
-		settings.retryMax = defaultRetryMax
+	if strategy.retryMax <= 0 {
+		strategy.retryMax = defaultRetryMax
 	}
 
-	if settings.retryInterval <= 0 {
-		settings.retryInterval = defaultRetryInterval
+	if strategy.retryInterval <= 0 {
+		strategy.retryInterval = defaultRetryInterval
 	}
 
 	return &circuitBreaker{
-		settings:          settings,
+		name:              name,
+		strategy:          strategy,
 		state:             Closed,
 		consecutiveErrors: 0,
 	}
@@ -85,7 +85,7 @@ func (c *circuitBreaker) Execute(f func() (interface{}, error)) (interface{}, er
 	case HalfOpen:
 		return nil, errors.New("circuit half open. trying to recover")
 	case Open:
-		message := fmt.Sprintf("%v circuit breaker open", c.settings.name)
+		message := fmt.Sprintf("%v circuit breaker open", c.name)
 		fmt.Printf("ALERT: %v", message)
 		return nil, errors.New(message)
 	}
@@ -98,7 +98,7 @@ func (c *circuitBreaker) handleSuccess() {
 
 func (c *circuitBreaker) handleError(f func() (interface{}, error)) {
 	c.consecutiveErrors++
-	if c.consecutiveErrors > c.settings.threshold {
+	if c.consecutiveErrors > c.strategy.threshold {
 		c.state = HalfOpen
 		go c.recover(f)
 	}
@@ -108,12 +108,12 @@ func (c *circuitBreaker) recover(f func() (interface{}, error)) {
 	retries := 0
 	for c.state == HalfOpen {
 		// Open circuit breaker when recovering fails
-		if retries > c.settings.retryMax {
+		if retries > c.strategy.retryMax {
 			c.state = Open
 			return
 		}
 
-		time.Sleep(time.Second * time.Duration(c.settings.retryInterval))
+		time.Sleep(time.Second * time.Duration(c.strategy.retryInterval))
 
 		// set state to closed if request is successful
 		_, err := f()
