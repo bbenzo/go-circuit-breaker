@@ -32,15 +32,22 @@ type circuitBreaker struct {
 	consecutiveErrors int
 }
 
-func (c *circuitBreaker) GetName() string {
-	return c.settings.name
-}
-
 // CircuitBreaker defines the circuit breaker decorator interface
 type CircuitBreaker interface {
 	Execute(func() (interface{}, error)) (interface{}, error)
 	GetState() State
 	GetName() string
+}
+
+// GetName returns name of circuit breaker
+func (c *circuitBreaker) GetName() string {
+	return c.settings.name
+}
+
+
+// GetState returns state of circuit breaker
+func (c *circuitBreaker) GetState() State {
+	return c.state
 }
 
 // NewCircuitBreaker returns new instance of circuit breaker
@@ -62,11 +69,6 @@ func NewCircuitBreaker(settings *Settings) CircuitBreaker {
 		state:             Closed,
 		consecutiveErrors: 0,
 	}
-}
-
-// GetState returns state of circuit breaker
-func (c *circuitBreaker) GetState() State {
-	return c.state
 }
 
 // Execute executes a function wrapped in a circuit breaker pattern
@@ -102,7 +104,6 @@ func (c *circuitBreaker) handleError(f func() (interface{}, error)) {
 	}
 }
 
-// recover executes function every 5 seconds to check if it still returns an error
 func (c *circuitBreaker) recover(f func() (interface{}, error)) {
 	retries := 0
 	for c.state == HalfOpen {
