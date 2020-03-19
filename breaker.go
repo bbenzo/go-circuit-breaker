@@ -20,9 +20,9 @@ const defaultRetryMax = 5
 
 // Strategy holds variables to configure circuit breaker
 type Strategy struct {
-	threshold     int
-	retryInterval int
-	retryMax      int
+	Threshold     int
+	RetryInterval int
+	RetryMax      int
 }
 
 type circuitBreaker struct {
@@ -51,16 +51,16 @@ func (c *circuitBreaker) GetState() State {
 
 // NewCircuitBreaker returns new instance of circuit breaker
 func NewCircuitBreaker(name string, strategy *Strategy) CircuitBreaker {
-	if strategy.threshold <= 0 {
-		strategy.threshold = defaultErrorThreshold
+	if strategy.Threshold <= 0 {
+		strategy.Threshold = defaultErrorThreshold
 	}
 
-	if strategy.retryMax <= 0 {
-		strategy.retryMax = defaultRetryMax
+	if strategy.RetryMax <= 0 {
+		strategy.RetryMax = defaultRetryMax
 	}
 
-	if strategy.retryInterval <= 0 {
-		strategy.retryInterval = defaultRetryInterval
+	if strategy.RetryInterval <= 0 {
+		strategy.RetryInterval = defaultRetryInterval
 	}
 
 	return &circuitBreaker{
@@ -98,7 +98,7 @@ func (c *circuitBreaker) handleSuccess() {
 
 func (c *circuitBreaker) handleError(f func() (interface{}, error)) {
 	c.consecutiveErrors++
-	if c.consecutiveErrors > c.strategy.threshold {
+	if c.consecutiveErrors > c.strategy.Threshold {
 		c.state = HalfOpen
 		go c.recover(f)
 	}
@@ -108,12 +108,12 @@ func (c *circuitBreaker) recover(f func() (interface{}, error)) {
 	retries := 0
 	for c.state == HalfOpen {
 		// Open circuit breaker when recovering fails
-		if retries > c.strategy.retryMax {
+		if retries > c.strategy.RetryMax {
 			c.state = Open
 			return
 		}
 
-		time.Sleep(time.Second * time.Duration(c.strategy.retryInterval))
+		time.Sleep(time.Second * time.Duration(c.strategy.RetryInterval))
 
 		// set state to closed if request is successful
 		_, err := f()

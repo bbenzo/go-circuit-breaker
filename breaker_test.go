@@ -8,7 +8,7 @@ import (
 )
 
 func TestWhenThresholdExceededStateIsHalfOpenError(t *testing.T) {
-	cb := NewCircuitBreaker("test", &Strategy{threshold: 2})
+	cb := NewCircuitBreaker("test", &Strategy{Threshold: 2})
 
 	errFunc := func() (interface{}, error) {
 		return nil, errors.New("i like to fail")
@@ -23,7 +23,7 @@ func TestWhenThresholdExceededStateIsHalfOpenError(t *testing.T) {
 }
 
 func TestWhenErrorsAreNotConsecutiveRemainClosed(t *testing.T) {
-	cb := NewCircuitBreaker("test", &Strategy{threshold: 2})
+	cb := NewCircuitBreaker("test", &Strategy{Threshold: 2})
 
 	errFunc := func() (interface{}, error) {
 		return nil, errors.New("i like to fail")
@@ -43,7 +43,7 @@ func TestWhenErrorsAreNotConsecutiveRemainClosed(t *testing.T) {
 }
 
 func TestWhenRecoverFailsStateIsOpen(t *testing.T) {
-	cb := NewCircuitBreaker("test", &Strategy{threshold: 2, retryInterval: 1, retryMax: 5})
+	cb := NewCircuitBreaker("test", &Strategy{Threshold: 2, RetryInterval: 1, RetryMax: 5})
 
 	errFunc := func() (interface{}, error) {
 		return nil, errors.New("i like to fail")
@@ -68,7 +68,7 @@ func TestWhenRecoverFailsStateIsOpen(t *testing.T) {
 }
 
 func TestWhenRecoverSucceedsStateIsClosed(t *testing.T) {
-	cb := NewCircuitBreaker("test", &Strategy{threshold: 2, retryInterval: 1, retryMax: 5})
+	cb := NewCircuitBreaker("test", &Strategy{Threshold: 2, RetryInterval: 1, RetryMax: 5})
 
 	// function which throws an error for every time within the next 3 seconds
 	then := time.Now().Add(time.Second * 3)
